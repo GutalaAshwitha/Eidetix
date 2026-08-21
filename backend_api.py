@@ -1,4 +1,4 @@
-
+﻿
 from __future__ import annotations
 
 import json
@@ -12,6 +12,8 @@ from pathlib import Path
 from threading import Lock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
+import mimetypes
+import mimetypes
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
@@ -571,6 +573,64 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
 
+        # Serve React/Vite frontend
+        if not path.startswith("/api/"):
+            try:
+                dist = ROOT / "dist"
+                requested = dist / path.lstrip("/") if path != "/" else dist / "index.html"
+
+                # Prevent path traversal
+                if not str(requested.resolve()).startswith(str(dist.resolve())):
+                    return self.send_json(403, {"error": "Forbidden"})
+
+                if requested.is_file():
+                    content = requested.read_bytes()
+                    content_type = mimetypes.guess_type(str(requested))[0] or "application/octet-stream"
+                    self.send_response(200)
+                    self.send_header("Content-Type", content_type)
+                    self.send_header("Content-Length", str(len(content)))
+                    self.end_headers()
+                    self.wfile.write(content)
+                    return
+
+                # React SPA fallback
+                index = dist / "index.html"
+                content = index.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+            except Exception as exc:
+                print("[static] error:", repr(exc))
+                return self.send_json(500, {"error": str(exc)})
+
+        
+        # Serve React/Vite frontend
+        if not path.startswith("/api/"):
+            dist = ROOT / "dist"
+            requested = dist / path.lstrip("/") if path != "/" else dist / "index.html"
+
+            if requested.is_file():
+                content = requested.read_bytes()
+                content_type = mimetypes.guess_type(str(requested))[0] or "application/octet-stream"
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
+            index = dist / "index.html"
+            content = index.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+            return
+
         try:
             if path == "/api/health":
                 return self.send_json(200, {
@@ -910,4 +970,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
