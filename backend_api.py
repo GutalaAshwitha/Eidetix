@@ -898,7 +898,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    port = int(os.environ.get("EIDETIX_API_PORT", "8787"))
+    port = int(os.environ.get("PORT", os.environ.get("EIDETIX_API_PORT", "8787")))
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     print(f"Eidetix backend API running at http://localhost:{port}")
     print(f"HydraDB connected: {HYDRA_LIVE}")
@@ -910,3 +910,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
