@@ -30,7 +30,7 @@ import {
 
 import "./styles.css";
 
-const API = const API = "https://eidetix-backend.onrender.com";
+const API = "https://eidetix-backend.onrender.com";
 const LS = "eidetix_user";
 
 const examples = [
